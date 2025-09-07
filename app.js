@@ -298,6 +298,8 @@ window.addEventListener('DOMContentLoaded', function () {
     if (refugeDrawingActive) return;
     refugeDrawingActive = true;
     clearRefugeDrawing();
+    // Suppress Telegram center double action while drawing
+    window.__suppressCenterDoubleAction = true;
 
     // Styling
     const lineStyle = { color: '#ff9800', weight: 3, dashArray: '6,6' };
@@ -350,11 +352,11 @@ window.addEventListener('DOMContentLoaded', function () {
       }
     };
 
-    // Double click near first vertex closes the polygon (backup for center-dot/keyboard-only)
-    const isNearFirstVertex = () => {
+    // Double click near first vertex closes the polygon
+    const isNearFirstVertex = (dblLatLng) => {
       if (refugeVertices.length < 3) return false;
       const first = refugeVertices[0];
-      const c = getMapCenterLatLng();
+      const c = dblLatLng || getMapCenterLatLng();
       const distMeters = map.distance(L.latLng(first[0], first[1]), c);
       return distMeters < 25; // threshold in meters
     };
@@ -387,7 +389,8 @@ window.addEventListener('DOMContentLoaded', function () {
 
     const onDoubleClick = (e) => {
       e && e.originalEvent && (e.originalEvent.preventDefault && e.originalEvent.preventDefault());
-      if (isNearFirstVertex()) {
+      const dblAt = (e && e.latlng) ? e.latlng : null;
+      if (isNearFirstVertex(dblAt)) {
         finalizePolygon();
       } else {
         // Not near start: treat as adding a vertex and continue
@@ -403,6 +406,8 @@ window.addEventListener('DOMContentLoaded', function () {
       // Keep the final polygon on map; clear transient state
       refugeVertices = [];
       if (refugePolyline) { map.removeLayer(refugePolyline); refugePolyline = null; }
+      // Re-enable Telegram center double action
+      window.__suppressCenterDoubleAction = false;
     }
 
     // Attach listeners
