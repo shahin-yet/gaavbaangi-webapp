@@ -450,7 +450,7 @@ window.addEventListener('DOMContentLoaded', function () {
       // Expect a table 'refuges' with geometry column 'geom'. Use ST_AsGeoJSON for client rendering
       const { data, error } = await supabase
         .from('refuges')
-        .select('id,name,geom_geojson:ST_AsGeoJSON(geom)')
+        .select('id,name,geom_geojson:ST_AsGeoJSON(geom),geom_json')
         .limit(500);
       if (error) throw error;
 
@@ -458,7 +458,7 @@ window.addEventListener('DOMContentLoaded', function () {
       savedRefugesLayer.clearLayers();
       (data || []).forEach(r => {
         try {
-          const gj = r.geom_geojson && JSON.parse(r.geom_geojson);
+          const gj = (r.geom_geojson ? JSON.parse(r.geom_geojson) : null) || r.geom_json;
           if (gj && gj.type === 'Polygon') {
             const ring = (gj.coordinates && gj.coordinates[0]) || [];
             const latlngs = ring.map(([lng, lat]) => L.latLng(lat, lng));
