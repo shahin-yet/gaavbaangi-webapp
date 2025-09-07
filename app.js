@@ -36,6 +36,9 @@ window.addEventListener('DOMContentLoaded', function () {
     zoomControl: !isTelegramWebApp // Hide zoom controls in Telegram
   });
 
+  // Persistent layer group for saved refuges (not affected by drawing clears)
+  const savedRefugesLayer = L.layerGroup().addTo(map);
+
   // Terrain layer (OpenTopoMap)
   const terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     maxZoom: 17,
@@ -368,7 +371,7 @@ window.addEventListener('DOMContentLoaded', function () {
       if (coords.length > 0) coords.push(coords[0]);
       const geojson = { type: 'Polygon', coordinates: [coords] };
 
-      // Render final polygon
+      // Render a temporary preview polygon (will be replaced by persisted render)
       const latlngs = refugeVertices.map(v => L.latLng(v[0], v[1]));
       if (refugePolyline) { map.removeLayer(refugePolyline); refugePolyline = null; }
       if (refugePolygonPreview) { map.removeLayer(refugePolygonPreview); }
@@ -379,6 +382,8 @@ window.addEventListener('DOMContentLoaded', function () {
 
       // Persist to backend
       saveRefugePolygon(geojson, name).then(() => {
+        // Replace preview with authoritative render from DB
+        if (refugePolygonPreview) { map.removeLayer(refugePolygonPreview); refugePolygonPreview = null; }
         stopRefugeDrawing();
         loadAndRenderRefuges();
       }).catch(err => {
@@ -449,6 +454,8 @@ window.addEventListener('DOMContentLoaded', function () {
         .limit(500);
       if (error) throw error;
 
+      // Clear and redraw saved refuges in a persistent layer group
+      savedRefugesLayer.clearLayers();
       (data || []).forEach(r => {
         try {
           const gj = r.geom_geojson && JSON.parse(r.geom_geojson);
@@ -460,7 +467,9 @@ window.addEventListener('DOMContentLoaded', function () {
               const last = latlngs[latlngs.length - 1];
               if (first.lat === last.lat && first.lng === last.lng) latlngs.pop();
             }
-            L.polygon(latlngs, { color: '#4caf50', weight: 2, fillColor: '#4caf50', fillOpacity: 0.15 }).addTo(map);
+            L.polygon(latlngs, { color: '#4caf50', weight: 2, fillColor: '#4caf50', fillOpacity: 0.15 })
+              .bindTooltip(r.name || 'Unnamed refuge')
+              .addTo(savedRefugesLayer);
           }
         } catch (_) {}
       });
