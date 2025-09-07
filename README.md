@@ -19,13 +19,22 @@ This guide is for non-technical users. Follow the steps in order to get the app 
 2. Choose an organization, set a strong database password, and create the project.
 3. Wait a few minutes until it finishes setting up.
 
-## 4) Get your Supabase URL and anon key
+## 4) Create the database objects (run the SQL)
+1. In Supabase → SQL Editor, open a new query.
+2. For each SQL files folder, copy its contents and pase it in a separate query tab.
+3. Click Run. This will:
+   - Enable required extensions (`postgis`, `pgcrypto`).
+   - Create table `public.refuges` to store refuge polygons.
+   - Enable public read access via RLS policy.
+   - Create RPC `public.insert_refuge(name_in, geojson_in)` used by the app to save polygons.
+
+## 5) Get your Supabase URL and anon key
 1. Supabase → Project Settings → API.
 2. Copy:
    - Project URL (like `https://xxxx.supabase.co`)
    - anon public key
 
-## 5) Add your keys to the app
+## 6) Add your keys to the app
 1. In your GitHub repo, open `index.html`.
 2. Near the bottom, find:
 ```html
@@ -36,19 +45,19 @@ This guide is for non-technical users. Follow the steps in order to get the app 
 ```
 3. Replace with your actual values and save.
 
-## 6) Deploy with GitHub Pages
+## 7) Deploy with GitHub Pages
 1. In your GitHub repo → Settings → Pages.
 2. Source: Deploy from a branch.
 3. Select branch `main` and folder `/ (root)`.
 4. Save and wait 1–3 minutes.
 5. Your site URL will appear (e.g., `https://your-username.github.io/gaavbaangi-webapp`).
 
-## 7) Test the app
+## 8) Test the app
 - Open your site URL. The map should load.
 - If you already have data in Supabase, polygons and pathlines will render.
-- Saving polygons will be enabled when the app sets up the database in a later step.
+- Saving polygons works after you complete step 4 (SQL setup).
 
-## 8) (Optional) Use as a Telegram Mini App
+## 9) (Optional) Use as a Telegram Mini App
 1. In Telegram, talk to `@BotFather` → `/newbot` → follow prompts.
 2. In `@BotFather` → your bot → Bot Settings → Web App → paste your GitHub Pages URL.
 3. Open your bot and tap the menu to launch the web app.
